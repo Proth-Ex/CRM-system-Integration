@@ -74,3 +74,8 @@ The stack was deliberately built with **Python (FastAPI + Pydantic)** to facilit
 - **LLM Function Calling:** CRM service methods (`get_customer_profile`, `get_orders`, `send_communication`) are pre-structured as Pydantic tools.
 - **Autonomous Support Agents:** Plug in LangGraph, CrewAI, or Google Gemini/OpenAI SDK to handle automated ticket replies and order lookups.
 - **Churn Prediction Engine:** An agent analyzing recency and sentiment in support notes to tag customers as high-churn risk.
+
+---
+
+## Link to the Videos
+https://drive.google.com/drive/folders/167banlJSG_L--8NuUMmC838FZMQJPfvz?usp=drive_link
