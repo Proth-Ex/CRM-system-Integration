@@ -65,11 +65,6 @@ Demonstrating codebase quality with our unit and integration test suite:
 
 For complete architectural diagrams and schemas, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
----
-
-## 🎤 Video Presentation Script
-
-A structured 2-minute pitch script formatted to maximize scoring criteria is available at [`docs/PRESENTATION_SCRIPT.md`](docs/PRESENTATION_SCRIPT.md).
 
 ---
 
