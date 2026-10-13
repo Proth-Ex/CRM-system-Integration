@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.db
+crm.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+
+# IDE & Logs
+.vscode/
+*.log
+.env
+*.env
