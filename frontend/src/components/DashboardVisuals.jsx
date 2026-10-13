@@ -280,23 +280,39 @@ export function RFMSegmentRingVisual({ customers = [], tierDistribution = {} }) 
   const [activeSlice, setActiveSlice] = useState(null);
 
   const tiers = useMemo(() => {
-    const rawCounts = {
-      VIP: tierDistribution?.VIP || customers.filter((c) => c.tier === "VIP").length || 3,
-      Loyal: tierDistribution?.Loyal || customers.filter((c) => c.tier === "Loyal").length || 4,
-      Regular: tierDistribution?.Regular || customers.filter((c) => c.tier === "Regular").length || 2,
-      New: tierDistribution?.New || customers.filter((c) => c.tier === "New").length || 1,
-    };
+    // Exact counts derived directly from customers array for strict 1:1 parity with Total Customers KPI
+    let vip = 0;
+    let loyal = 0;
+    let regular = 0;
+    let newBuyers = 0;
 
-    const total = Object.values(rawCounts).reduce((a, b) => a + b, 0) || 10;
+    if (customers && customers.length > 0) {
+      customers.forEach((c) => {
+        const t = c.tier || "New";
+        if (t === "VIP") vip++;
+        else if (t === "Loyal") loyal++;
+        else if (t === "Regular") regular++;
+        else newBuyers++; // Maps "New", "Lead", etc.
+      });
+    } else if (tierDistribution) {
+      vip = tierDistribution.VIP ?? 0;
+      loyal = tierDistribution.Loyal ?? 0;
+      regular = tierDistribution.Regular ?? 0;
+      newBuyers = (tierDistribution.New ?? 0) + (tierDistribution.Lead ?? 0);
+    }
 
-    return [
-      { id: "VIP", label: "VIP Tier", count: rawCounts.VIP, color: "#a855f7", bg: "rgba(168, 85, 247, 0.15)", spendRange: "> ₹30,000", desc: "Top spenders with multiple repeat orders" },
-      { id: "Loyal", label: "Loyal Tier", count: rawCounts.Loyal, color: "#06b6d4", bg: "rgba(6, 182, 212, 0.15)", spendRange: "₹10k - ₹30k", desc: "Consistent repeat tech buyers" },
-      { id: "Regular", label: "Regular Tier", count: rawCounts.Regular, color: "#10b981", bg: "rgba(16, 185, 129, 0.15)", spendRange: "₹3k - ₹10k", desc: "Standard purchase cadence" },
-      { id: "New", label: "New Buyers", count: rawCounts.New, color: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)", spendRange: "< ₹3,000", desc: "Recent first-time buyers in onboarding" },
-    ].map((t) => ({
+    const tierList = [
+      { id: "VIP", label: "VIP Tier", count: vip, color: "#a855f7", bg: "rgba(168, 85, 247, 0.15)", spendRange: "> ₹30,000", desc: "Top spenders with multiple repeat orders" },
+      { id: "Loyal", label: "Loyal Tier", count: loyal, color: "#06b6d4", bg: "rgba(6, 182, 212, 0.15)", spendRange: "₹10k - ₹30k", desc: "Consistent repeat tech buyers" },
+      { id: "Regular", label: "Regular Tier", count: regular, color: "#10b981", bg: "rgba(16, 185, 129, 0.15)", spendRange: "₹3k - ₹10k", desc: "Standard purchase cadence" },
+      { id: "New", label: "New Buyers", count: newBuyers, color: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)", spendRange: "< ₹3,000", desc: "Recent first-time buyers in onboarding" },
+    ];
+
+    const actualSum = tierList.reduce((s, t) => s + t.count, 0) || 1;
+
+    return tierList.map((t) => ({
       ...t,
-      percentage: Math.round((t.count / total) * 100),
+      percentage: Math.round((t.count / actualSum) * 100),
     }));
   }, [customers, tierDistribution]);
 
