@@ -88,6 +88,37 @@ const INCENTIVE_OPTIONS = [
   },
 ];
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: "30px", color: "#f87171", background: "rgba(244, 63, 94, 0.1)", borderRadius: "12px", margin: "20px" }}>
+          <h3 style={{ fontSize: "1.1rem" }}>⚠️ View encountered a runtime render error</h3>
+          <p style={{ marginTop: "8px", fontSize: "0.85rem", color: "#94a3b8" }}>{this.state.error?.message || "Unknown error"}</p>
+          <button
+            onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            className="btn btn-secondary btn-sm"
+            style={{ marginTop: "12px" }}
+          >
+            Reload View
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [analytics, setAnalytics] = useState(null);
@@ -162,6 +193,7 @@ export default function App() {
   const [aiIntent, setAiIntent] = useState("festive_loyalty_offer");
   const [aiResult, setAiResult] = useState(null);
   const [aiChurnResult, setAiChurnResult] = useState(null);
+  const [isChurnAnalyzing, setIsChurnAnalyzing] = useState(false);
   const [aiTestNote, setAiTestNote] = useState("Urgent delivery required for wedding reception at Taj Panaji! Please call security desk on arrival.");
   const [aiTriageResult, setAiTriageResult] = useState(null);
 
@@ -308,6 +340,51 @@ export default function App() {
       loadAllData();
     } catch (err) {
       showToast("Failed to dispatch reply", "error");
+    }
+  };
+
+  // Gemini AI Hub Handlers
+  const handleRunAIHubDraft = async () => {
+    if (!aiSelectedCustomerId) return;
+    setIsAIGenerating(true);
+    try {
+      const res = await api.aiDraftCommunication(
+        aiSelectedCustomerId,
+        aiIntent,
+        "email",
+        "auto"
+      );
+      setAiResult(res);
+      showToast("Live Gemini synthesized outreach copy successfully!");
+    } catch (err) {
+      showToast("Gemini copy generation failed. Check API key.", "error");
+    } finally {
+      setIsAIGenerating(false);
+    }
+  };
+
+  const handleRunAITriage = async () => {
+    if (!aiTestNote.trim()) return;
+    try {
+      const res = await api.aiTriageNote(aiTestNote);
+      setAiTriageResult(res);
+      showToast(`Triage complete: Urgency ${res.inferred_urgency}!`);
+    } catch (err) {
+      showToast("NLP Triage failed", "error");
+    }
+  };
+
+  const handleRunAIChurnRisk = async () => {
+    if (!aiSelectedCustomerId) return;
+    setIsChurnAnalyzing(true);
+    try {
+      const res = await api.aiChurnRisk(aiSelectedCustomerId);
+      setAiChurnResult(res);
+      showToast(`Churn Risk Analyzed: Score ${res.churn_probability}% (${res.risk_level})`);
+    } catch (err) {
+      showToast("Churn analysis failed", "error");
+    } finally {
+      setIsChurnAnalyzing(false);
     }
   };
 
@@ -637,6 +714,7 @@ export default function App() {
           )}
         </div>
 
+        <ErrorBoundary>
         {/* TAB 1: HELPDESK & TICKETS (AI) - DIRECT MATCH TO SLIDE 1! */}
         {activeTab === "helpdesk" && (
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -1493,6 +1571,69 @@ export default function App() {
                 )}
               </div>
 
+              {/* Deployment Point 2: Churn Prediction & Scoring */}
+              <div className="glass-card" style={{ padding: "22px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Flame size={18} color="var(--accent-rose)" />
+                  <h3 style={{ fontSize: "1rem" }}>Deployment Point 2: Churn Risk Radar</h3>
+                </div>
+                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                  Live Gemini algorithmic scoring calculating churn probability, purchase drop-off velocity, and win-back timing.
+                </p>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div>
+                    <label style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>Target Profile:</label>
+                    <div style={{ fontSize: "0.82rem", color: "var(--text-primary)", padding: "8px", backgroundColor: "var(--bg-surface)", borderRadius: "var(--radius-sm)", marginTop: "4px" }}>
+                      {customers.find((c) => c.id.toString() === aiSelectedCustomerId)?.first_name
+                        ? `${customers.find((c) => c.id.toString() === aiSelectedCustomerId)?.first_name} ${customers.find((c) => c.id.toString() === aiSelectedCustomerId)?.last_name} (#${aiSelectedCustomerId})`
+                        : "Select profile in Point 1"}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleRunAIChurnRisk}
+                    disabled={isChurnAnalyzing || !aiSelectedCustomerId}
+                    className="btn btn-secondary"
+                    style={{ marginTop: "4px" }}
+                  >
+                    <Flame size={14} color="#f43f5e" /> {isChurnAnalyzing ? "Analyzing Risk with Gemini..." : "Analyze Churn Probability"}
+                  </button>
+                </div>
+
+                {aiChurnResult && (
+                  <div
+                    style={{
+                      padding: "12px",
+                      backgroundColor: "var(--bg-surface)",
+                      borderRadius: "var(--radius-sm)",
+                      fontSize: "0.8rem",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      marginTop: "4px",
+                      border: "1px solid rgba(244, 63, 94, 0.3)",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Risk Level:</span>
+                      <span className={`badge badge-${aiChurnResult.risk_level === 'HIGH RISK' ? 'cancelled' : 'completed'}`}>
+                        {aiChurnResult.risk_level}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Churn Probability:</span>
+                      <strong style={{ color: "var(--accent-rose)", fontFamily: "var(--font-mono)" }}>
+                        {aiChurnResult.churn_probability}%
+                      </strong>
+                    </div>
+                    <div style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                      <strong>Suggested Action:</strong> {aiChurnResult.recommended_action || "Trigger automated win-back strategy"}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="glass-card" style={{ padding: "22px", display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <Cpu size={18} color="var(--accent-emerald)" />
@@ -1590,6 +1731,7 @@ export default function App() {
             </div>
           </div>
         )}
+        </ErrorBoundary>
 
         {/* CUSTOMER 360° DRAWER / MODAL */}
         {selectedCustomer && customerModalData && (
