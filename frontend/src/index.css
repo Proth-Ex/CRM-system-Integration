@@ -266,3 +266,25 @@ input:focus, select:focus, textarea:focus {
 .pulse-glow {
   animation: pulseGlow 2s infinite ease-in-out;
 }
+
+/* Dashboard Visual Layouts */
+.dashboard-grid-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.dashboard-grid-1-1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid-2-1 {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-grid-1-1 {
+    grid-template-columns: 1fr;
+  }
+}

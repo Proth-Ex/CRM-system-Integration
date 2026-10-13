@@ -32,6 +32,13 @@ import {
   CornerDownRight
 } from "lucide-react";
 import { api } from "./api";
+import {
+  RevenueTrajectoryChart,
+  RFMSegmentRingVisual,
+  RegionalCitySpectrumVisual,
+  OrderFulfillmentFunnelVisual,
+  RetentionHealthGaugeVisual,
+} from "./components/DashboardVisuals";
 
 const INCENTIVE_OPTIONS = [
   {
@@ -1076,6 +1083,21 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* Visual Analytics Row 1: Revenue Trajectory + RFM Segments */}
+            <div className="dashboard-grid-2-1">
+              <RevenueTrajectoryChart orders={orders} totalRevenue={analytics?.total_revenue} />
+              <RFMSegmentRingVisual customers={customers} tierDistribution={analytics?.tier_distribution} />
+            </div>
+
+            {/* Visual Analytics Row 2: Regional Order Spectrum + Order Fulfillment Funnel */}
+            <div className="dashboard-grid-1-1">
+              <RegionalCitySpectrumVisual customers={customers} orders={orders} />
+              <OrderFulfillmentFunnelVisual orders={orders} />
+            </div>
+
+            {/* Visual Analytics Row 3: Retention Health & Churn Probability Gauge */}
+            <RetentionHealthGaugeVisual slippingCustomers={slippingCustomers} />
 
             {/* Quick Navigation Cards */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
